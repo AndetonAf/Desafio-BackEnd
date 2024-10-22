@@ -135,7 +135,6 @@ namespace BackEnd
 
             app.UseEndpoints(endpoints => { 
                 endpoints.MapHealthChecks("/health", new HealthCheckOptions { ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse });
-                endpoints.MapGet("/", () => JsonSerializer.Serialize(GlobalConfigurations.Settings));
                 endpoints.MapControllers();
             });
         }
