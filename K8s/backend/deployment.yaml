@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  selector:
+    matchLabels:
+      app: backend
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: "backend"
+    spec:
+      volumes:
+        - name: backend-base-config-volume
+          configMap: 
+            name: backend-base-config
+      containers:
+        - name: backend
+          image: "localhost:5001/backend:2.1"
+          volumeMounts:
+            - name: backend-base-config-volume
+              mountPath: /app/config
+          imagePullPolicy: Always
+          envFrom:
+            - secretRef:
+                name: backend-base-secret
+              
+          startupProbe:
+            httpGet:
+              path: '/health'
+              port: 8080
+            periodSeconds: 2
+            failureThreshold: 30
+
+          readinessProbe:
+            httpGet:
+              path: '/health'
+              port: 8080
+            periodSeconds: 3
+            failureThreshold: 3
+            timeoutSeconds: 1
+
+          livenessProbe:
+            httpGet:
+              path: '/health'
+              port: 8080
+            periodSeconds: 3
+            failureThreshold: 5
+            timeoutSeconds: 1

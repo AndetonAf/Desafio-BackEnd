@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-base-config
+data:
+  appsettings.json: |
+    {
+      "Auth": {
+        "SecretJwt": "${SECRET_JWT}"
+      },
+      "ConnectionStrings": {
+        "db": "${DB_CONNECTION_STRING}"
+      },
+      "Gcp": {
+        "PathRelative": true, // Se o PathJson é relativo ao projeto ou não (Url absoluta)
+        "PathJson": "${PATH_JSON}",
+        "ProjectId": "${PROJECT_ID}",
+        "Bucket": "${BUCKET}"
+      },
+      "Logging": {
+        "LogLevel": {
+          "Default": "Information",
+          "Microsoft.AspNetCore": "Warning"
+        }
+      },
+      "AllowedHosts": "*"
+    }
+  gcp-key.json: |
+    {
+    }
+
+

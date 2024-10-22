@@ -1,75 +1,60 @@
-# Desafio backend Mottu.
-Seja muito bem-vindo ao desafio backend da Mottu, obrigado pelo interesse em fazer parte do nosso time e ajudar a melhorar a vida de milhares de pessoas.
+# Desafio BackEnd
 
-## Instruções
-- O desafio é válido para diversos níveis, portanto não se preocupe se não conseguir resolver por completo.
-- A aplicação só será avaliada se estiver rodando, se necessário crie um passo a passo para isso.
-- Faça um clone do repositório em seu git pessoal para iniciar o desenvolvimento e não cite nada relacionado a Mottu.
-- Após finalização envie um e-mail para o recrutador informando o repositório para análise.
-  
-## Requisitos não funcionais 
-- A aplicação deverá ser construida com .Net utilizando C#.
-- Utilizar apenas os seguintes bancos de dados (Postgress, MongoDB)
-    - Não utilizar PL/pgSQL
-- Escolha o sistema de mensageria de sua preferencia( RabbitMq, Sqs/Sns , Kafka, Gooogle Pub/Sub ou qualquer outro)
+![alt text](Images/swagger.png)
 
-## Aplicação a ser desenvolvida
-Seu objetivo é criar uma aplicação para gerenciar aluguel de motos e entregadores. Quando um entregador estiver registrado e com uma locação ativa poderá também efetuar entregas de pedidos disponíveis na plataforma.
+### Sobre o desafio
+Todos os casos de uso e diferenciais foram inclusos no projeto
 
-Iremos executar um teste de integração para validar os cenários de uso. Por isso, sua aplicação deve seguir exatamente as especificações de API`s Rest do nosso Swager: request, response e status code.
-Garanta que os atributos dos JSON`s e estão de acordo com o Swagger abaixo.
+Foi adicionado docker e docker composer para o projeto principal e para uso de um banco postgresql em dev/test que caso seja usado deve ser considerado `host.docker.internal` como host.
 
-Swagger de referência:
-https://app.swaggerhub.com/apis-docs/Mottu/mottu_desafio_backend/1.0.0
+Foi adicionado uma pasta `k8s` com os scripts que foram utilizados para deploy no meu ambiente local do kubernets com Kind (Sistema, banco de dados, deployment, services, configmap e ingress), vale pontuar que no caso atual usei o kind-registry para gestão de imagens, com essa pasta você deve conseguir fazer deploy em qualquer ambiente local e cloud adaptando a camada de ingress
 
-### Casos de uso
-- Eu como usuário admin quero cadastrar uma nova moto.
-  - Os dados obrigatórios da moto são Identificador, Ano, Modelo e Placa
-  - A placa é um dado único e não pode se repetir.
-  - Quando a moto for cadastrada a aplicação deverá gerar um evento de moto cadastrada
-    - A notificação deverá ser publicada por mensageria.
-    - Criar um consumidor para notificar quando o ano da moto for "2024"
-    - Assim que a mensagem for recebida, deverá ser armazenada no banco de dados para consulta futura.
-- Eu como usuário admin quero consultar as motos existentes na plataforma e conseguir filtrar pela placa.
-- Eu como usuário admin quero modificar uma moto alterando apenas sua placa que foi cadastrado indevidamente
-- Eu como usuário admin quero remover uma moto que foi cadastrado incorretamente, desde que não tenha registro de locações.
-- Eu como usuário entregador quero me cadastrar na plataforma para alugar motos.
-    - Os dados do entregador são( identificador, nome, cnpj, data de nascimento, número da CNHh, tipo da CNH, imagemCNH)
-    - Os tipos de cnh válidos são A, B ou ambas A+B.
-    - O cnpj é único e não pode se repetir.
-    - O número da CNH é único e não pode se repetir.
-- Eu como entregador quero enviar a foto de minha cnh para atualizar meu cadastro.
-    - O formato do arquivo deve ser png ou bmp.
-    - A foto não poderá ser armazenada no banco de dados, você pode utilizar um serviço de storage( disco local, amazon s3, minIO ou outros).
-- Eu como entregador quero alugar uma moto por um período.
-    - Os planos disponíveis para locação são:
-        - 7 dias com um custo de R$30,00 por dia
-        - 15 dias com um custo de R$28,00 por dia
-        - 30 dias com um custo de R$22,00 por dia
-        - 45 dias com um custo de R$20,00 por dia
-        - 50 dias com um custo de R$18,00 por dia
-    - A locação obrigatóriamente tem que ter uma data de inicio e uma data de término e outra data de previsão de término.
-    - O inicio da locação obrigatóriamente é o primeiro dia após a data de criação.
-    - Somente entregadores habilitados na categoria A podem efetuar uma locação
-- Eu como entregador quero informar a data que irei devolver a moto e consultar o valor total da locação.
-    - Quando a data informada for inferior a data prevista do término, será cobrado o valor das diárias e uma multa adicional
-        - Para plano de 7 dias o valor da multa é de 20% sobre o valor das diárias não efetivadas.
-        - Para plano de 15 dias o valor da multa é de 40% sobre o valor das diárias não efetivadas.
-    - Quando a data informada for superior a data prevista do término, será cobrado um valor adicional de R$50,00 por diária adicional.
-    
+![alt text](Images/k9s.png)
 
-## Diferenciais 🚀
-- Testes unitários
-- Testes de integração
-- EntityFramework e/ou Dapper
-- Docker e Docker Compose
-- Design Patterns
-- Documentação
-- Tratamento de erros
-- Arquitetura e modelagem de dados
-- Código escrito em língua inglesa
-- Código limpo e organizado
-- Logs bem estruturados
-- Seguir convenções utilizadas pela comunidade
-  
 
+## Iniciando o projeto
+Para iniciar o projeto é necessário apenas que preencha o appsettings.json, para funcionar por completo deve adicionar também o .json de permissões do gcloud para conseguir usar o pub/sub e o storage/bucket
+
+`Para os testes de integração externo é importante considerar /api/v1/ como parte da url base`
+
+#### Aplicar Migrações
+- cd Data
+- dotnet ef database update --startup-project ..\BackEnd\ --context Context
+
+## Oque foi utilizado?
+- .NET 8.0
+- EntityFrameworkCore 8
+- Dapper
+- PostgreSQL
+- Google.Cloud.PubSub
+- Google.Cloud.Storage
+- xUnit
+
+## Testes de Integração/Unitários
+![alt text](Images/coverage.png)
+Todos os end-points estão cobertos por testes de integração/middleware e foram feitos testes unitários para funções com cálculos mais críticos
+
+## Diagrama do banco de dados
+![alt text](Images/diagram-db.png)
+
+## Considerações sobre Autenticação e Permissões
+1. Como não ficou claro se um usuário pode ou não ter 2 permissões, considerei que não para demostrar melhor o controle de permissões.
+
+2. Foi feito um end-point que só roda em debug para obter os JWT e testar as permissões, mas também deixei 2 JWT que podem ser usados se as chaves não forem alteradas.
+
+3. A verificação de permissão está sendo feita pelo JWT então se for comum a troca de permissões é importante implementar um fluxo de cancelamento de token, a outra opção é verificar no banco a cada requisição se o usuário tem permissão, oque seria menos performático.
+ 
+## Tokens
+#### Administrador
+`Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0YWYzNDkzNS0xODMwLTRjM2ItOThhZS04N2U0MWVlYTI1OTgiLCJ0eXBlIjoiMSIsIm5iZiI6MTcyOTM3OTEyMiwiZXhwIjoxNzYwOTE1MTIyLCJpYXQiOjE3MjkzNzkxMjJ9.aG6QyShYL11YPVH_gDVS-bmK3YqnJDkooOqtV6AiH40`
+
+#### Entregador
+`Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNjUzNWUyNi1lNmNhLTRkZWEtOGUwZS0yYTQ1ZGQ1NDg3ZjYiLCJ0eXBlIjoiMiIsIm5iZiI6MTcyOTM3OTI4NiwiZXhwIjoxNzYwOTE1Mjg2LCJpYXQiOjE3MjkzNzkyODZ9.8vsLb1WbGsZLUg6METWvamaPNK19QRFNRSN79BX0kog`
+
+## Informações Extras
+`Para os testes de integração externo é importante considerar /api/v1/ como parte da url base`
+
+1. Considerei os identificadores como strings cadastráveis já que não existe retorno de Id nem listagens em alguns casos para conseguir continuar usando o cadastro em outros end-points
+2. Foi adicionado um campo de Identificador que não existe no swagger no post /locacao para que seja possível usar esse id no get /locacao/{id}
+3. Não foi adicionado uma verificação se o Entregador que está solicitando é o mesmo que está autenticado  para não atrapalhar nos testes
+4. Não fica claro na documentação como deve ser retornado o valor total da locação, então devolvi o total de dias, valor diário, valor de multa e total
